@@ -1,72 +1,126 @@
-import { createSlice,createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import userAPI from "../api/userAPI";
 import axios from "axios";
+import * as secureStorage from 'expo-secure-store'
 
-const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MmEwNDIwZWQ1YzU1ZGYxOTkxMmNiYjAiLCJlbWFpbCI6ImRhbmlhbG1vaGFtbW9kODRAZ21haWwuY29tIiwicm9sZSI6InNob3BrZWVwZXIiLCJzdGF0dXMiOiJwZW5kaW5nIiwiaWF0IjoxNjU1NTYyNzY2LCJleHAiOjE2NTU1NzM1NjZ9.2rXrMke1tZKWgnhCNlGvHoK-PpICPjfS6LOenpK1GBo"
-
-
-export const getUserAsync = createAsyncThunk('user/getUserAsync',async ()=>{
+export const getUserAsync = createAsyncThunk('user/getUserAsync', async (token) => {
     try {
-        const res= await axios.get('https://ecomerce-api-project.herokuapp.com/api/user/me',{
-            headers:{
-                'authorization':token
+        const res = await axios.get('https://ecomerce-api-project.herokuapp.com/api/user/me', {
+            headers: {
+                'authorization': "Bearer " + token,
+                "Conten-Type": "application/json"
             }
         })
+        console.log(res.status)
+        return res.data.user
+
     } catch (error) {
         console.log(error)
     }
 })
-
-
-export const postUserAsync = createAsyncThunk('user/getUserAsync',async (user)=>{
+export const loginAsync = createAsyncThunk("user/loginUserAsync", async (user, thunkAPI) => {
     try {
-        const res= await axios.post('https://ecomerce-api-project.herokuapp.com/api/user/register',{
-            headers:{
-                "Conten-Type":"multipart/form-data"
-            },
-            file:{},
-            body:user
-        })
-        console.log(res)
+        const res = await axios.post('https://ecomerce-api-project.herokuapp.com/api/user/login',
+            {
+                "email": user.email,
+                "password": user.password
+            })
+        console.log("Login ", res.data)
+        if (res.status === 200) {
+            return res.data
+        }
+
+    } catch (error) {
+        console.log("Error   ", error)
+        thunkAPI.rejectWithValue(error)
+
+    }
+})
+
+export const postUserAsync = createAsyncThunk('user/createUserAsync', async (user) => {
+    //here logic goes
+    try {
+        const res = await axios.post("https://ecomerce-api-project.herokuapp.com/api/user/register", user)
+        console.log(res.data)
+        return res.data
     } catch (error) {
         console.log(error)
+        return error.message
     }
+
 })
 
 const userSlice = createSlice({
     name: "user",
     initialState: {
-        user: { },
-        loading:false
+        user: null,
+        isLoading: false,
+        isFatching: false,
+        isSuccess: false,
+
     },
     reducers: {
-        setUser: (state,action) => {
-            
-            if(action.payload==={}){
-                state.user = action.payload
-                state.loading = false
-            }else{
-                state.user = JSON.parse(action.payload)
-                state.loading = false
+        setUser: (state, action) => {
+
+            if (action.payload === null) {
+                state.user = null
+                state.isLoading = false
+            } else {
+                const data = JSON.parse(action.payload)
+                state.user = data.user
+                state.isLoading = false
 
             }
         }
     },
-    extraReducers:{
-        [getUserAsync.pending]:(state)=>{
-            state.loading = true
-        },
-        [getUserAsync.fulfilled]:(state)=>{
-            state.loading = false
-        },
-        [postUserAsync.pending]:(state)=>{
-            state.loading = true
-        },
-        [postUserAsync.fulfilled]:(state)=>{
-            state.loading = false
-        }
-        
+    extraReducers: (builder) => {
+        builder.addCase(getUserAsync.pending, (state) => {
+            console.log('getUserAsync Pending')
+            state.isLoading = true
+            state.isFatching = true
+        })
+        builder.addCase(getUserAsync.rejected, (state) => {
+            console.log('getUserAsync Rejected')
+            state.isLoading = false
+            state.isSuccess = false
+            state.isFatching = false
+        })
+        builder.addCase(getUserAsync.fulfilled, (state, action) => {
+            console.log('getUserAsync Fulfilled')
+
+            state.user = action.payload
+            state.isLoading = false
+            state.isFatching = false
+            state.isSuccess = true
+        }),
+            /////////////////////////////////////////////////////////////LOGIN USER///////////////////////////////////////////////
+            builder.addCase(loginAsync.pending, (state) => {
+                console.log('Login Pending')
+                state.isFatching = true
+            }),
+            builder.addCase(loginAsync.fulfilled, (state, action) => {
+                const data = JSON.stringify(action.payload)
+                secureStorage.setItemAsync('data', data)
+                state.user = action.payload.user
+
+                console.log("loginAsync Fulfilled", action.payload.user)
+            }),
+            builder.addCase(loginAsync.rejected, (state) => {
+                console.log('LoginAsync Rejected')
+                state.isSuccess = false
+            }),
+            //////////////////////////////////////////////////////////////SIGNUP USER//////////////////////////////////////////////
+            builder.addCase(postUserAsync.pending, (state => {
+                console.log('pending')
+            })),
+            builder.addCase(postUserAsync.rejected, (state) => {
+                console.log('rejected')
+            }),
+            builder.addCase(postUserAsync.fulfilled, (state, action) => {
+                console.log(action.payload)
+            })
     }
 })
+
 export const { setUser } = userSlice.actions
 export default userSlice.reducer

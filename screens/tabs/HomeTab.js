@@ -7,14 +7,14 @@ import CartScreen from '../CartScreen'
 import MyShopScreen from '../MyShopScreen'
 import ProfileScreen from '../ProfileScreen'
 import OrdersScreen from '../OrdersScreen';
-import {useSelector} from 'react-redux'
+import { useSelector } from 'react-redux'
 const Tab = createBottomTabNavigator();
 
 export default function HomeTab(props) {
-    const {user,loading} = useSelector((state)=> state.user)
-    useEffect(()=>{
-        console.log('Home Tab',user)
-    },[user])
+    const { user, loading } = useSelector((state) => state.user)
+    console.log("Home Tab",user) 
+        
+
     return (
         <Tab.Navigator screenOptions={({ route }) => ({
             tabBarIcon: ({ focused, color, size }) => {
@@ -27,7 +27,7 @@ export default function HomeTab(props) {
                     iconName = 'shoppingcart'
                 } else if (route.name === 'Profile') {
                     iconName = 'profile'
-                }else if(route.name ==='Orders'){
+                } else if (route.name === 'Orders') {
                     iconName = 'book'
                 }
                 return <AntDesign name={iconName} size={size} color={focused ? color : 'grey'} />
@@ -38,14 +38,19 @@ export default function HomeTab(props) {
         })}
             initialRouteName='Home'>
             <Tab.Screen name='Home' component={HomeScreen} />
-            {user['role'] ==='shopkeeper' ?
+            {user && user.role === "shopkeeper" ?
                 <Tab.Group>
+
                     <Tab.Screen name='MyShop' component={MyShopScreen} />
                     <Tab.Screen name='Orders' component={OrdersScreen} />
-                </Tab.Group>
-                :
+                </Tab.Group> :
                 <Tab.Screen name='Cart' component={CartScreen} />
             }
+
+
+
+
+
 
 
 

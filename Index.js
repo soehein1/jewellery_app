@@ -7,31 +7,25 @@ import { useEffect, useState } from 'react';
 import { useSelector,useDispatch } from 'react-redux';
 import { setUser } from './state/userSlice';
 import * as secureStorage from 'expo-secure-store'
-import { getUserAsync } from './state/userSlice';
 
 
 export default function Index() {
-    const [loading,setLoading] = useState(true)
+    const {user,isLoading} =useSelector((state)=>state.user)
     const dispatch = useDispatch()
     useEffect(()=>{
-        dispatch(getUserAsync())
-        secureStorage.setItemAsync('user',JSON.stringify({'name':'Shamvil' , 'role':'shopkeeper'})).then(()=>{
-            secureStorage.getItemAsync('user').then((user)=>{
-                console.log('Index',user)
-                dispatch(setUser(user))
-            })
-                 
-                setLoading(false)
+        secureStorage.getItemAsync('data').then((data)=>{
+            if(data){
+                dispatch(setUser(data))
+            }
+        })
 
         })
-        
-    })
 
     return (
 
         <NavigationContainer>
             <StatusBar />
-            {loading?<Text>Loading</Text>:<MyStack />}
+            {isLoading?<Text>Loading</Text>:<MyStack />}
         </NavigationContainer>
     );
 }

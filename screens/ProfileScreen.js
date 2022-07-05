@@ -1,14 +1,15 @@
 import { View, Text, Button, Image, StyleSheet, TouchableOpacity } from 'react-native'
 import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
-
+import User from '../components/User'
 
 export default function ProfileScreen({ navigation }) {
   const { user } = useSelector((state) => state.user)
   return (
     <View style={styles.container}>
+      <User/>
       <Text>Profile Screen</Text>
-      <Button title='Goto Auth Screen' onPress={() => navigation.navigate('Auth')} />
+      <Button title='Goto Auth Screen' onPress={() => navigation.navigate('SignIn')} />
     </View>
   )
 }
@@ -16,8 +17,7 @@ export default function ProfileScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     margin: 5,
-    justifyContent: 'center',
-    alignItems: 'center'
+    
   },
   image: {
     width: 100,
