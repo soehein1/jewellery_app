@@ -8,12 +8,12 @@ import MyShopScreen from '../MyShopScreen'
 import ProfileScreen from '../ProfileScreen'
 import OrdersScreen from '../OrdersScreen';
 import { useSelector } from 'react-redux'
+import { StackActions } from '@react-navigation/native';
 const Tab = createBottomTabNavigator();
 
 export default function HomeTab(props) {
     const { user, loading } = useSelector((state) => state.user)
-    console.log("Home Tab",user) 
-        
+
 
     return (
         <Tab.Navigator screenOptions={({ route }) => ({
@@ -37,25 +37,30 @@ export default function HomeTab(props) {
             tabBarInactiveTintColor: 'grey'
         })}
             initialRouteName='Home'>
-            <Tab.Screen name='Home' component={HomeScreen} />
-            {user && user.role === "shopkeeper" ?
+            {!user ?
                 <Tab.Group>
-
-                    <Tab.Screen name='MyShop' component={MyShopScreen} />
-                    <Tab.Screen name='Orders' component={OrdersScreen} />
+                    <Tab.Screen name='Home' component={HomeScreen} />
+                    <Tab.Screen name='Profile' component={ProfileScreen} />
                 </Tab.Group> :
-                <Tab.Screen name='Cart' component={CartScreen} />
+                <Tab.Group>
+                    {user.role === "shopkeeper" ?
+                        <Tab.Group>
+                            <Tab.Screen name='Home' component={HomeScreen} />
+                            <Tab.Screen name='MyShop' component={MyShopScreen} />
+                            <Tab.Screen name='Orders' component={OrdersScreen} />
+                            <Tab.Screen name='Profile' component={ProfileScreen} />
+                        </Tab.Group> :
+                        <Tab.Group>
+                            <Tab.Screen name='Home' component={HomeScreen} />
+                            <Tab.Screen name='Profile' component={ProfileScreen} />
+                            <Tab.Screen name='Cart' component={CartScreen} />
+                        </Tab.Group>
+                    }
+                </Tab.Group>
+
+
             }
 
-
-
-
-
-
-
-
-
-            <Tab.Screen name='Profile' component={ProfileScreen} />
         </Tab.Navigator>
     )
 }

@@ -3,29 +3,37 @@ import { StatusBar } from 'expo-status-bar';
 import {  StyleSheet, Text, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import MyStack from './stacks/MyStack';
-import { useEffect, useState } from 'react';
 import { useSelector,useDispatch } from 'react-redux';
-import { setUser } from './state/userSlice';
 import * as secureStorage from 'expo-secure-store'
+import { setUser } from './state/userSlice';
+import { getUserAsync } from './state/userSlice'
+import React, { useEffect , useCallback} from 'react'
+import LoadingScreen from './screens/LoadingScreen';
 
 
 export default function Index() {
-    const {user,isLoading} =useSelector((state)=>state.user)
+    const {user,initializing} =useSelector((state)=>state.user)
     const dispatch = useDispatch()
-    useEffect(()=>{
-        secureStorage.getItemAsync('data').then((data)=>{
-            if(data){
-                dispatch(setUser(data))
-            }
+    useEffect(() => {
+        secureStorage.getItemAsync('token').then((tk) => {
+            const token = JSON.parse(tk)
+          if (token) {
+            dispatch(getUserAsync(token))
+          } else {
+            dispatch(setUser(null))
+          }
         })
-
-        })
+    
+      }, []);
 
     return (
 
         <NavigationContainer>
             <StatusBar />
-            {isLoading?<Text>Loading</Text>:<MyStack />}
+            {
+              initializing?<LoadingScreen/>:<MyStack />
+            }
+            
         </NavigationContainer>
     );
 }

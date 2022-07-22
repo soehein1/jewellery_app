@@ -1,20 +1,20 @@
 import { View, Text, TextInput, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native'
-import React, { useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import * as secureStorage from 'expo-secure-store'
 import { setUser } from '../state/userSlice'
 import { loginAsync } from '../state/userSlice'
-
+import { useFocusEffect ,Link} from '@react-navigation/native'
 import Button from '../components/Button'
 
 
 
 
-export default function AuthScreen({ navigation }) {
+export default function SignInScreen({ navigation }) {
+  const { message } = useSelector((state) => state.user)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const dispatch = useDispatch()
-
   return (
     <ScrollView >
 
@@ -23,13 +23,14 @@ export default function AuthScreen({ navigation }) {
         <Text style={styles.lebel}>Login</Text>
         <TextInput autoComplete='email' placeholder='Email' onChangeText={setEmail} style={styles.input} />
         <TextInput secureTextEntry={true} placeholder='Password' onChangeText={setPassword} style={styles.input} />
-
+        <Link style = {styles.link} to={{screen:'ForgotPassword' }}>Forgot Password</Link>
         <Button style={styles.btn} title='LogIn' onPress={() => {
           if (email && password) {
             dispatch(loginAsync({ email, password }))
           }
         }} />
         <Button style={styles.btn} title="Are you new here?" onPress={() => navigation.replace('SignUp')} />
+        <Text style={styles.error}>{message}</Text>
       </View>
     </ScrollView>
   )
@@ -74,5 +75,12 @@ const styles = StyleSheet.create({
   img: {
     width: 100,
     height: 100
+  },
+  error: {
+    color: 'red',
+    padding: 10
+  },
+  link:{
+    color:'blue'
   }
 })

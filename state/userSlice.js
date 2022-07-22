@@ -3,21 +3,31 @@ import userAPI from "../api/userAPI";
 import axios from "axios";
 import * as secureStorage from 'expo-secure-store'
 
-export const getUserAsync = createAsyncThunk('user/getUserAsync', async (token) => {
+
+
+
+export const getUserAsync = createAsyncThunk('user/getUserAsync', async (key, thunkAPI) => {
     try {
+
         const res = await axios.get('https://ecomerce-api-project.herokuapp.com/api/user/me', {
             headers: {
-                'authorization': "Bearer " + token,
+                'authorization': "Bearer " + key,
                 "Conten-Type": "application/json"
             }
         })
-        console.log(res.status)
-        return res.data.user
+        return thunkAPI.fulfillWithValue(res.data.user)
 
     } catch (error) {
-        console.log(error)
+        if (error.response) {
+            return thunkAPI.rejectWithValue(error.response.data.message)
+        }
+        return thunkAPI.rejectWithValue({ 'error': error.message })
+
     }
 })
+
+
+
 export const loginAsync = createAsyncThunk("user/loginUserAsync", async (user, thunkAPI) => {
     try {
         const res = await axios.post('https://ecomerce-api-project.herokuapp.com/api/user/login',
@@ -25,38 +35,52 @@ export const loginAsync = createAsyncThunk("user/loginUserAsync", async (user, t
                 "email": user.email,
                 "password": user.password
             })
-        console.log("Login ", res.data)
         if (res.status === 200) {
-            return res.data
+            return thunkAPI.fulfillWithValue(res.data)
         }
+        return thunkAPI.rejectWithValue({ "error": res.data })
 
     } catch (error) {
-        console.log("Error   ", error)
-        thunkAPI.rejectWithValue(error)
+        if (error.response) {
+            return thunkAPI.rejectWithValue(error.response.data.message)
+        }
+        return thunkAPI.rejectWithValue({ 'error': "something went wrong" })
 
     }
 })
 
-export const postUserAsync = createAsyncThunk('user/createUserAsync', async (user) => {
-    //here logic goes
+
+
+
+export const postUserAsync = createAsyncThunk('user/createUserAsync', async (user, thunkAPI) => {
     try {
         const res = await axios.post("https://ecomerce-api-project.herokuapp.com/api/user/register", user)
         console.log(res.data)
-        return res.data
+        if (res.status === 201) {
+
+            return thunkAPI.fulfillWithValue(res.data)
+        }
+        return thunkAPI.rejectWithValue(res.data)
     } catch (error) {
-        console.log(error)
-        return error.message
+        if (error.response) {
+            return thunkAPI.rejectWithValue(error.response.data.message)
+        }
+        return thunkAPI.rejectWithValue({"error":error.message})
     }
 
 })
+
+
 
 const userSlice = createSlice({
     name: "user",
     initialState: {
         user: null,
+        initializing :false,
         isLoading: false,
         isFatching: false,
         isSuccess: false,
+        message: ''
 
     },
     reducers: {
@@ -75,50 +99,53 @@ const userSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder.addCase(getUserAsync.pending, (state) => {
-            console.log('getUserAsync Pending')
+            state.initializing = true
             state.isLoading = true
             state.isFatching = true
-        })
-        builder.addCase(getUserAsync.rejected, (state) => {
-            console.log('getUserAsync Rejected')
-            state.isLoading = false
-            state.isSuccess = false
-            state.isFatching = false
-        })
+        });
         builder.addCase(getUserAsync.fulfilled, (state, action) => {
-            console.log('getUserAsync Fulfilled')
-
+            state.initializing = false
             state.user = action.payload
             state.isLoading = false
             state.isFatching = false
             state.isSuccess = true
-        }),
-            /////////////////////////////////////////////////////////////LOGIN USER///////////////////////////////////////////////
-            builder.addCase(loginAsync.pending, (state) => {
-                console.log('Login Pending')
-                state.isFatching = true
-            }),
-            builder.addCase(loginAsync.fulfilled, (state, action) => {
-                const data = JSON.stringify(action.payload)
-                secureStorage.setItemAsync('data', data)
-                state.user = action.payload.user
+        });
+        builder.addCase(getUserAsync.rejected, (state, action) => {
+            state.initializing = false
+            state.isLoading = false
+            state.isSuccess = false
+            state.user = null
+        });
 
-                console.log("loginAsync Fulfilled", action.payload.user)
-            }),
-            builder.addCase(loginAsync.rejected, (state) => {
-                console.log('LoginAsync Rejected')
-                state.isSuccess = false
-            }),
-            //////////////////////////////////////////////////////////////SIGNUP USER//////////////////////////////////////////////
-            builder.addCase(postUserAsync.pending, (state => {
-                console.log('pending')
-            })),
-            builder.addCase(postUserAsync.rejected, (state) => {
-                console.log('rejected')
-            }),
-            builder.addCase(postUserAsync.fulfilled, (state, action) => {
-                console.log(action.payload)
-            })
+        /////////////////////////////////////////////////////////////LOGIN USER///////////////////////////////////////////////
+        builder.addCase(loginAsync.pending, (state) => {
+            state.isFatching = true
+            state.message = 'loading....'
+        });
+        builder.addCase(loginAsync.fulfilled, (state, action) => {
+            const data = JSON.stringify(action.payload.token)
+            secureStorage.setItemAsync('token', data)
+            state.user = action.payload.user
+            state.message = ''
+
+        });
+        builder.addCase(loginAsync.rejected, (state, action) => {
+            state.user = null
+            state.isSuccess = false
+            state.message = action.payload
+
+        });
+        //////////////////////////////////////////////////////////////SIGNUP USER//////////////////////////////////////////////
+        builder.addCase(postUserAsync.pending, (state => {
+            console.log('pending')
+        }));
+        builder.addCase(postUserAsync.rejected, (state, action) => {
+
+            console.log('rejected', action.payload)
+        });
+        builder.addCase(postUserAsync.fulfilled, (state, action) => {
+            console.log(action.payload)
+        })
     }
 })
 

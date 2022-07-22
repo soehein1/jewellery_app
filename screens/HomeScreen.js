@@ -1,25 +1,25 @@
-import { View, Text, Button, StyleSheet, ScrollView } from 'react-native'
+import { View, Text, Button, StyleSheet, ScrollView, ImageBackground } from 'react-native'
 import React from 'react'
-import {  useSelector } from 'react-redux'
-import { useFocusEffect } from '@react-navigation/native'
+import { useSelector } from 'react-redux'
+import Categories from '../components/Categories'
+import Shop from '../components/shop/Shop'
 
 export default function HomeScreen({ navigation }) {
   const { user } = useSelector(state => state.user)
   return (
-    <ScrollView>
-      <View style={styles.container}>
-        <Text>Home Screen </Text>
-      </View>
-    </ScrollView>
+    <ImageBackground style={styles.container} source={require('../assets/image/app_background.png')}>
+      <ScrollView>
+        {!user || user.role !== 'shopkeeper' ? <Categories /> : <Shop />}
+      </ScrollView>
+    </ImageBackground>
+
 
   )
 }
 
 const styles = StyleSheet.create({
   container: {
-    display: 'flex',
-    margin: 5,
-    justifyContent: 'center',
-    alignItems: 'center'
+    width: '100%',
+    height: '100%'
   }
 })
